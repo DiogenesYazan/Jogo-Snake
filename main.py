@@ -1,12 +1,9 @@
-# ************************************
-# Python Snake usando tkinter
-# ************************************
 from tkinter import *
 import random
 
 GAME_WIDTH = 700
 GAME_HEIGHT = 700
-SPEED = 200
+INITIAL_SPEED = 300
 SPACE_SIZE = 50
 BODY_PARTS = 3
 SNAKE_COLOR = "#00FF00"
@@ -15,7 +12,6 @@ BACKGROUND_COLOR = "#000000"
 
 
 class Snake:
-
     def __init__(self):
         self.body_size = BODY_PARTS
         self.coordinates = []
@@ -30,11 +26,9 @@ class Snake:
 
 
 class Food:
-
     def __init__(self):
-
-        x = random.randint(0, (GAME_WIDTH / SPACE_SIZE)-1) * SPACE_SIZE
-        y = random.randint(0, (GAME_HEIGHT / SPACE_SIZE) - 1) * SPACE_SIZE
+        x = random.randint(0, (GAME_WIDTH // SPACE_SIZE) - 1) * SPACE_SIZE
+        y = random.randint(0, (GAME_HEIGHT // SPACE_SIZE) - 1) * SPACE_SIZE
 
         self.coordinates = [x, y]
 
@@ -42,7 +36,6 @@ class Food:
 
 
 def next_turn(snake, food):
-
     x, y = snake.coordinates[0]
 
     if direction == "up":
@@ -61,57 +54,40 @@ def next_turn(snake, food):
     snake.squares.insert(0, square)
 
     if x == food.coordinates[0] and y == food.coordinates[1]:
-
-        global score
-
+        global score, speed
         score += 1
-
+        speed = max(50, speed - 5)  # Aumenta a velocidade, mínimo de 50ms
         label.config(text="Score:{}".format(score))
-
         canvas.delete("food")
-
         food = Food()
-
     else:
-
         del snake.coordinates[-1]
-
         canvas.delete(snake.squares[-1])
-
         del snake.squares[-1]
 
     if check_collisions(snake):
         game_over()
-
     else:
-        window.after(SPEED, next_turn, snake, food)
+        window.after(speed, next_turn, snake, food)
 
 
 def change_direction(new_direction):
-
     global direction
 
-    if new_direction == 'left':
-        if direction != 'right':
-            direction = new_direction
-    elif new_direction == 'right':
-        if direction != 'left':
-            direction = new_direction
-    elif new_direction == 'up':
-        if direction != 'down':
-            direction = new_direction
-    elif new_direction == 'down':
-        if direction != 'up':
-            direction = new_direction
+    if new_direction == 'left' and direction != 'right':
+        direction = new_direction
+    elif new_direction == 'right' and direction != 'left':
+        direction = new_direction
+    elif new_direction == 'up' and direction != 'down':
+        direction = new_direction
+    elif new_direction == 'down' and direction != 'up':
+        direction = new_direction
 
 
 def check_collisions(snake):
-
     x, y = snake.coordinates[0]
 
-    if x < 0 or x >= GAME_WIDTH:
-        return True
-    elif y < 0 or y >= GAME_HEIGHT:
+    if x < 0 or x >= GAME_WIDTH or y < 0 or y >= GAME_HEIGHT:
         return True
 
     for body_part in snake.coordinates[1:]:
@@ -122,18 +98,34 @@ def check_collisions(snake):
 
 
 def game_over():
-
+    global try_again_button
     canvas.delete(ALL)
-    canvas.create_text(canvas.winfo_width()/2, canvas.winfo_height()/2,
-                       font=('consolas',70), text="GAME OVER", fill="red", tag="gameover")
+    canvas.create_text(canvas.winfo_width() / 2, canvas.winfo_height() / 2,
+                       font=('consolas', 70), text="GAME OVER", fill="red", tag="gameover")
+    try_again_button = Button(window, text="Try Again", command=restart_game, font=('consolas', 20))
+    try_again_button.place(relx=0.5, rely=0.6, anchor=CENTER)
+
+
+def restart_game():
+    global snake, food, score, direction, speed
+    canvas.delete(ALL)
+    score = 0
+    direction = 'down'
+    speed = INITIAL_SPEED
+    label.config(text="Score:{}".format(score))
+    try_again_button.destroy()
+    snake = Snake()
+    food = Food()
+    next_turn(snake, food)
 
 
 window = Tk()
-window.title("Snake game")
+window.title("Snake Game")
 window.resizable(False, False)
 
 score = 0
 direction = 'down'
+speed = INITIAL_SPEED
 
 label = Label(window, text="Score:{}".format(score), font=('consolas', 40))
 label.pack()
@@ -148,8 +140,8 @@ window_height = window.winfo_height()
 screen_width = window.winfo_screenwidth()
 screen_height = window.winfo_screenheight()
 
-x = int((screen_width/2) - (window_width/2))
-y = int((screen_height/2) - (window_height/2))
+x = int((screen_width / 2) - (window_width / 2))
+y = int((screen_height / 2) - (window_height / 2))
 
 window.geometry(f"{window_width}x{window_height}+{x}+{y}")
 
